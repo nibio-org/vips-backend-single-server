@@ -3,24 +3,26 @@
 # (c) 2019 NIBIO
 # Author Tor-Einar Skog <tor-einar.skog@nibio.no>
 
+CODE_USER=wildfly
+
 # Locale update
 # We want the server to user UTF-8 as standard
 locale-gen en_US.UTF-8
-#sudo dpkg-reconfigure locales
+# dpkg-reconfigure locales # probably double work, remove if not needed
 
 # Database install and setup
 # If you have a separate data disk for the database,
 # then you need to perform some manual steps after installing 
 # postgresql. They are not described here.
-sudo apt-get install postgresql postgis
+apt-get --assume-yes install postgresql postgis
 
 # Initialize the VIPSLogic database
-printf "\n\nInitializing the VIPSLogic database"
-printf "We need some input from you before doing that"
+printf "\n\nInitializing the VIPSLogic database\n"
+printf "We need some input from you before doing that\n"
 printf "Required fields are marked with [*]"
 
-printf "\nDATABASE USER INFORMATION"
-printf "We will create a postgresql user 'vipslogic' which will own the 'vipslogic' database"
+printf "\nDATABASE USER INFORMATION\n"
+printf "We will create a postgresql user 'vipslogic' which will own the 'vipslogic' database\n"
 while [ "$vipslogic_password" == "" ]
 do
 	read -sp "Password for vipslogic [*]: " vipslogic_password
@@ -30,17 +32,49 @@ sudo -H -u postgres bash -c "psql -v vipslogic_password=\"'$vipslogic_password'\
 
 printf "Done with database initialization part 1 (of 3)"
 
+printf "\n\nBUILD THE APPLICATION\n"
+printf "\nInstalling OpenJDK11 and build tool Maven\n"
+apt-get install --assume-yes openjdk-11-jdk maven
+
 # Download, compile and deploy VIPSLogic
 # We need a deploy key for that
 printf "\n\nDOWNLOADING VIPSLOGIC SOURCE CODE"
-printf "\nYou need access to the VIPSLogic GitLab repository before you can proceed\n"
-read -p "GitLab deploy token [*]: " deploy_token
-read -p "GitLab deploy password [*]: " deploy_password
-git clone https://$deploy_token:$deploy_password@gitlab.nibio.no/VIPS/VIPSLogic.git
+printf "\nYou need access to the VIPSLogic and VIPSCommon GitLab repositories before you can proceed\n"
+while [ "$vipslogic_deploy_token" == "" ]
+do
+	read -p "GitLab deploy token for VIPSLogic [*]: " vipslogic_deploy_token
+done
+while [ "$vipslogic_deploy_password" == "" ]
+do
+	read -p "GitLab deploy password for VIPSLogic [*]: " vipslogic_deploy_password
+done
+while [ "$vipscommon_deploy_token" == "" ]
+do
+	read -p "GitLab deploy token for VIPSCommon [*]: " vipscommon_deploy_token
+done
+while [ "$vipscommon_deploy_password" == "" ]
+do
+	read -p "GitLab deploy password for VIPSCommon [*]: " vipscommon_deploy_password
+done
 
-printf "\nVIPSLogic source code downloaded. Installing OpenJDK11 and build tool Maven\n"
-apt-get install openjdk-11-jdk maven
+printf "\nWe also need to create a user for compiling and running the code\n"
 
+# Add local user for code deployment and running of the Wildfly Application server
+adduser $CODE_USER
+
+# Clone VIPSCommon and VIPSLogic from GitLab
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipslogic_deploy_token:$vipslogic_deploy_password@gitlab.nibio.no/VIPS/VIPSLogic.git ~/VIPSLogic"
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscommon_deploy_token:$vipscommon_deploy_password@gitlab.nibio.no/VIPS/VIPSCommon.git ~/VIPSCommon"
+
+# Build the source code
+cd /home/$CODE_USER/VIPSCommon
+sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+cd ../VIPSLogic
+sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+
+# Download Wildfly 16
+sudo -H -u $CODE_USER bash -c "https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.tar.gz"
+sudo -H -u $CODE_USER bash -c "tar xzf wildfly-16.0.0.Final.tar.gz"
 
 
 printf "\nORGANIZATION INFO\n"

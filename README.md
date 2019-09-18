@@ -19,3 +19,5 @@ If you get this error message:
 cd into the directory vips-backend-single-server/ and run the script:
 
 `sudo ./vips-backend-single-server.sh`
+
+The installation process may take quite a while. You will be asked questions every now and then, so please make sure to check in on the output from time to time.
