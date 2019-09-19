@@ -72,10 +72,24 @@ sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 cd ../VIPSLogic
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
-# Download Wildfly 16
+# Download and unzip Wildfly 16
 sudo -H -u $CODE_USER bash -c "https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.tar.gz"
 sudo -H -u $CODE_USER bash -c "tar xzf wildfly-16.0.0.Final.tar.gz"
 
+# Edit standalone.xml, the Wildfly config file
+
+
+# Add the required modules for VIPSLogic to Wildfly
+# PostgreSQL
+# etc
+
+# Set up WildFly as a systemd service
+
+# Install and configure Apache
+
+# Run (test?) WildFly with VIPSLogic deployed
+# If successful, this will migrate the vipslogic database to its correct state
+# Next up is adding organization information
 
 printf "\nORGANIZATION INFO\n"
 while [ "$organization_name" == "" ]

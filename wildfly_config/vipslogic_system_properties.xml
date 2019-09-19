@@ -1,0 +1,21 @@
+<system-properties>
+        <property name="no.nibio.vips.logic.VIPSLOGIC_PROTOCOL" value="http"/>
+        <property name="no.nibio.vips.logic.VIPSCOREMANAGER_URL" value="http://localhost:8080/VIPSCoreManager"/>
+        <property name="no.nibio.vips.logic.SYSTEM_TIME_OFFSET_MONTHS" value="0"/>
+        <property name="no.nibio.vips.logic.START_SCHEDULING_ON_BOOT" value="false"/>
+        <property name="no.nibio.vips.logic.MD5_SALT" value="XXXXXXXXX"/>
+        <property name="no.nibio.vips.logic.CORE_BATCH_USERNAME" value="XXXXXXXXXXX"/>
+        <property name="no.nibio.vips.logic.CORE_BATCH_PASSWORD" value="XXXXXXXXXX"/>
+        <property name="no.nibio.vips.logic.SMTP_SERVER" value="XXXXXXXXXXXxx"/>
+        <property name="no.nibio.vips.logic.MESSAGE_ILLUSTRATION_PATH" value="XXXXXXXXXXX"/>
+        <property name="no.nibio.vips.logic.OBSERVATION_ILLUSTRATION_PATH" value="XXXXXXXXXXXXXXXXXx"/>
+        <property name="no.nibio.vips.logic.GOOGLE_OPENID_CLIENT_ID" value="XXXXXXXXXXXXXXXXXXXXXXXXXXXX"/>
+        <property name="no.nibio.vips.logic.GOOGLE_OPENID_CLIENT_SECRET" value="XXXXXXXXXXXXXXXXXXXXXXXXXxx"/>
+        <property name="no.nibio.vips.logic.ALLOWED_X_DOMAINS" value="localhost"/>
+        <property name="no.nibio.vips.logic.AVAILABLE_LANGUAGES" value="en,nb"/>
+        <property name="no.nibio.vips.logic.AVAILABLE_TIMEZONES" value="Europe/Oslo,Europe/Zurich,Europe/Stockholm,Europe/Sarajevo"/>
+        <property name="VIPS_MSG_SERVER_ENV" value="production"/>
+        <property name="no.nibio.vips.logic.USER_COUNTRY_CODES" value="NO,SE,BA,LV,US,FI,LT"/>
+        <property name="no.nibio.vips.logic.DISABLE_MESSAGING_SYSTEM" value="true"/>
+    </system-properties>
+
