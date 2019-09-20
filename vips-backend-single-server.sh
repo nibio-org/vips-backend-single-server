@@ -73,17 +73,36 @@ cd ../VIPSLogic
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
 # Download and unzip Wildfly 16
-sudo -H -u $CODE_USER bash -c "https://download.jboss.org/wildfly/16.0.0.Final/wildfly-16.0.0.Final.tar.gz"
-sudo -H -u $CODE_USER bash -c "tar xzf wildfly-16.0.0.Final.tar.gz"
+WILDFLY_VERSION=16.0.0.Final
+sudo -H -u $CODE_USER bash -c "https://download.jboss.org/wildfly/$WILDFLY_VERSION/$WILDFLY_VERSION.tar.gz"
+sudo -H -u $CODE_USER bash -c "tar xzf $WILDFLY_VERSION.tar.gz"
 
 # Edit standalone.xml, the Wildfly config file
+printf "\nWILDFLY CONFIGURATION\n"
+while [ "$smtpserver" == "" ]
+do
+	read -p "SMTP servername [*]: " smtpserver
+done
+while [ "$md5salt" == "" ]
+do
+	read -p "MD5 salt (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt
+done
 
+WILDFLY_HOME=/home/$CODE_USER/$WILDFLY_VERSION
+WILDFLY_CONFIG_PATH=$WILDFLY_HOME/standalone/configuration
+
+cd wildfly_config
+sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml.py --smtpserver $smtpserver --md5salt $md5salt --dbpassword $vipslogic_password --path $WILDFLY_CONFIG_PATH"
 
 # Add the required modules for VIPSLogic to Wildfly
 # PostgreSQL
 # etc
+# All modules needed to run VIPSLogic AND VIPSCore are added
+cp -r modules/* $WILDFLY_HOME/modules
 
 # Set up WildFly as a systemd service
+
+
 
 # Install and configure Apache
 
