@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  	&copy; 2018 NIBIO
+	Author: Tor-Einar Skog <tor-einar.skog@nibio.no>
+  -->
+
+<module xmlns="urn:jboss:module:1.1" name="com.bedatadriven.jackson.datatype.jts.JtsModule">
+    <resources>
+        <!--resource-root path="."/-->
+	<resource-root path="jackson-datatype-jts-2.2.jar"/>
+
+        <!-- Insert resources here -->
+    </resources>
+    <dependencies>
+	<module name="com.fasterxml.jackson.core.jackson-core"/>
+	<module name="com.fasterxml.jackson.core.jackson-databind"/>
+	<module name="com.vividsolutions.jts"/>
+	<module name="javax.api"/>
+    </dependencies>    
+    
+</module>

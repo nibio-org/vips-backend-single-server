@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  	&copy; 2013 Bioforsk
+	Author: Tor-Einar Skog <tor-einar.skog@nibio.no>
+  -->
+
+<module xmlns="urn:jboss:module:1.1" name="no.nibio.vips.modelcontainer">
+    <resources>
+        <!--resource-root path="."/-->
+	<resource-root path="GenericPathogenPlantInfectionModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="AppleScabModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="GrassDryingModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="NaerstadModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="OatFloweringModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="PlasmoparaViticolaModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="DeliaRadicumModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="HoplocampaFlavaModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="BarleyNetBlotchModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="CydiaPomonellaModel-1.0-SNAPSHOT.jar"/>
+	<resource-root path="RoughageNutritionModel-1.0-SNAPSHOT.jar"/>
+
+        <!-- Insert resources here -->
+    </resources>
+    <dependencies>
+		<module name="no.nibio.vips.VIPSCommon" export="false"/>
+		<!--module name="org.apache.commons.math" export="false"/-->
+		<module name="com.fasterxml.jackson.core.jackson-core" export="false"/>
+		<module name="com.fasterxml.jackson.core.jackson-databind" export="false"/>
+    </dependencies>
+    
+</module>

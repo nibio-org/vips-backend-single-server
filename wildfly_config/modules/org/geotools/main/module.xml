@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  	&copy; 2019 NIBIO
+	Author: Tor-Einar Skog <tor-einar.skog@nibio.no>
+  -->
+
+<module xmlns="urn:jboss:module:1.1" name="org.geotools">
+    <resources>
+        <!--resource-root path="."/-->
+	<resource-root path="gt-opengis-20.3.jar"/>
+
+        <!-- Insert resources here -->
+    </resources>
+    <dependencies>
+		
+    </dependencies>
+    
+</module>

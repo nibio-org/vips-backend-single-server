@@ -1,0 +1,11 @@
+
+org/postgresql
+org/postgis
+META-INF/maven/org.postgis
+META-INF/maven
+org/postgis/binary
+org/postgis/java2d
+org
+examples
+META-INF
+META-INF/maven/org.postgis/postgis-jdbc
