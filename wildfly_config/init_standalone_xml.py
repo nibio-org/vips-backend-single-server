@@ -17,10 +17,10 @@ args = parser.parse_args()
 
 path = args.path
 # Make a copy of the original file
-copyfile(path + "standalone.xml", path + "standalone_original.xml")
+copyfile(path + "/standalone.xml", path + "/standalone_original.xml")
 
 # The destination document
-standalone_dom = parse(path + "standalone.xml")
+standalone_dom = parse(path + "/standalone.xml")
 
 # The system properties to add to destination (standalone.xml)
 vsp_dom = parse("vipslogic_system_properties.xml")
@@ -56,6 +56,6 @@ for driver in drivers_elm.getElementsByTagName("driver"):
 
 
 # Write to file
-outputfile = open(path + "standalone.xml", "w")
+outputfile = open(path + "/standalone.xml", "w")
 outputfile.write(standalone_dom.toxml())
 outputfile.close()

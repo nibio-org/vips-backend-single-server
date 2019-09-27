@@ -4,6 +4,7 @@
 # Author Tor-Einar Skog <tor-einar.skog@nibio.no>
 
 CODE_USER=wildfly
+INITIAL_DIRECTORY=$(pwd)
 
 # Locale update
 # We want the server to user UTF-8 as standard
@@ -73,9 +74,11 @@ cd ../VIPSLogic
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
 # Download and unzip Wildfly 16
+cd ..
 WILDFLY_VERSION=16.0.0.Final
-sudo -H -u $CODE_USER bash -c "https://download.jboss.org/wildfly/$WILDFLY_VERSION/$WILDFLY_VERSION.tar.gz"
-sudo -H -u $CODE_USER bash -c "tar xzf $WILDFLY_VERSION.tar.gz"
+sudo -H -u $CODE_USER bash -c "wget https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz"
+sudo -H -u $CODE_USER bash -c "tar xzf wildfly-$WILDFLY_VERSION.tar.gz"
+sudo -H -u $CODE_USER bash -c "rm wildfly-$WILDFLY_VERSION.tar.gz"
 
 # Edit standalone.xml, the Wildfly config file
 printf "\nWILDFLY CONFIGURATION\n"
@@ -88,25 +91,33 @@ do
 	read -p "MD5 salt (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt
 done
 
-WILDFLY_HOME=/home/$CODE_USER/$WILDFLY_VERSION
+WILDFLY_HOME=/home/$CODE_USER/wildfly-$WILDFLY_VERSION
 WILDFLY_CONFIG_PATH=$WILDFLY_HOME/standalone/configuration
 
-cd wildfly_config
+cd $INITIAL_DIRECTORY/wildfly_config
 sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml.py --smtpserver $smtpserver --md5salt $md5salt --dbpassword $vipslogic_password --path $WILDFLY_CONFIG_PATH"
 
 # Add the required modules for VIPSLogic to Wildfly
 # PostgreSQL
 # etc
 # All modules needed to run VIPSLogic AND VIPSCore are added
-cp -r modules/* $WILDFLY_HOME/modules
+sudo -H -u $CODE_USER bash -c "cp -r modules/* $WILDFLY_HOME/modules"
 
 # Set up WildFly as a systemd service
+mkdir /etc/wildfly
+cp systemd_templates/wildfly.conf /etc/wildfly
+cp systemd_templates/wildfly.service /etc/systemd/system
+sed -i -e "s,WILDFLY_PATH_REPLACE_WITH_SED,$WILDFLY_HOME," /etc/systemd/system/wildfly.service
+cp systemd_templates/launch.sh $WILDFLY_HOME/bin
+sed -i -e "s,WILDFLY_PATH_REPLACE_WITH_SED,$WILDFLY_HOME," $WILDFLY_HOME/bin/launch.sh
 
+# Add VIPSLogic to the Wildfly deployments folder
+sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 
-
-# Install and configure Apache
 
 # Run (test?) WildFly with VIPSLogic deployed
+$WILDFLY_HOME/bin/standalone.sh
+
 # If successful, this will migrate the vipslogic database to its correct state
 # Next up is adding organization information
 
@@ -128,7 +139,7 @@ read -p "Web map default center longitude (WGS84):" longitude
 read -p "Web map default center latitude (WGS84):" latitude
 read -p "Default timezone (See https://docs.oracle.com/javase/8/docs/api/java/util/TimeZone.html): " timezone
 
-printf "\nINITIAL ADMIN USER INFO"
+printf "\nINITIAL ADMIN USER INFO\n"
 while [ "$user_email" == "" ]
 do
         read -p "Email [*]: " user_email
@@ -139,3 +150,5 @@ do
         read -p "Last name [*]: " last_name
 done
 
+
+# Install and configure Apache
