@@ -155,10 +155,10 @@ systemctl restart apache2
 # Test it
 echo "127.0.0.1 $servername" >> /etc/hosts
 
-response=$(curl --write-out %{http_code} --connect-timeout 3 --silent --output /dev/null http://$servername/VIPSLogic/rest/organization)
+response=$(curl --write-out %{http_code} --connect-timeout 3 --silent --output /dev/null http://$servername/rest/organization)
 if [ $response -ne 200 ]
 then
-	echo "Error configuring Apache. Exiting"
+	echo "Error configuring Apache. Server returned status code $response. Exiting"
 	exit 1
 fi
 
@@ -168,7 +168,6 @@ sleep 5s
 
 
 # Next up is adding organization information
-
 printf "\nORGANIZATION INFO\n"
 while [ "$organization_name" == "" ]
 do
@@ -197,7 +196,15 @@ while [ "$last_name" == "" ]
 do
         read -p "Last name [*]: " last_name
 done
+read -p "Username: " username
 
-#TODO: Change from ROLLBACK to COMMIT
-PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_name,address1,address2,postal_code,country_code,default_locale,default_map_center,default_map_zoom,default_time_zone,city) VALUES('$organization_name','$address_1','$address_2','$postal_code','$country_code','$default_language',ST_GeomFromText('POINT($longitude $latitude)',4326),4,'$timezone','$city');ROLLBACK;"
+read -sp "Password for $username [*]: " user_password
+
+passwordhash=$(./md5pass.py $user_password $md5_salt)
+
+PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;TRUNCATE public.organization CASCADE; INSERT INTO public.organization(organization_name,address1,address2,postal_code,country_code,default_locale,default_map_center,default_map_zoom,default_time_zone,city) VALUES('$organization_name','$address_1','$address_2','$postal_code','$country_code','$default_language',ST_GeomFromText('POINT($longitude $latitude)',4326),4,'$timezone','$city');COMMIT;"
+
+PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.vips_logic_user(email,first_name,last_name,organization_id,user_status_id,preferred_locale) VALUES('$user_email','$first_name','$last_name',(SELECT organization_id FROM public.organization WHERE organization_name='$organization_name'),4,'$default_language'); COMMIT;"
+
+PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.user_authentication(user_id,user_authentication_type_id,username,password) VALUES((SELECT user_id FROM public.vips_logic_user WHERE first_name='$first_name' AND last_name='$last_name'),1,'$username','$passwordhash'); COMMIT;"
 
