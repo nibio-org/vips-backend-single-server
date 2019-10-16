@@ -115,10 +115,58 @@ sed -i -e "s,WILDFLY_PATH_REPLACE_WITH_SED,$WILDFLY_HOME," $WILDFLY_HOME/bin/lau
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 
 
-# Run (test?) WildFly with VIPSLogic deployed
-$WILDFLY_HOME/bin/standalone.sh
-
+# Run and test WildFly with VIPSLogic deployed
 # If successful, this will migrate the vipslogic database to its correct state
+echo "TESTING THE WILDFLY APPLICATION SERVER"
+# Start WildFly
+sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh &"
+# Periodically test a database dependant endpoint
+sleep 10s
+response=400
+counter=0
+while [ $response -ne 200 ]
+do
+        sleep 3s
+        response=$(curl --write-out %{http_code} --connect-timeout 3 --silent --output /dev/null localhost:8080/VIPSLogic/rest/organization)
+        counter=$(($counter+1))
+        if [ $counter -gt 10 ]
+        then
+                echo "Could not start WildFly. Exiting"
+                sudo pkill --newest java
+                exit 1
+        fi
+        echo "HTTP response from server: $response"
+done
+
+echo "WildFly started successfully. Installing Apache as frontend."
+
+# Install the Apache web server as frontend
+cd $INITIAL_DIRECTORY
+read -p "Server name of this VIPSLogic installation (e.g. logic.vips.foo.org): " servername
+apt-get --assume-yes install apache2
+a2enmod proxy_http headers ssl
+cp apache_config/vipslogic.conf /etc/apache2/sites-available/
+sed -i -e "s,SERVER_NAME_REPLACE_WITH_SED,$servername," /etc/apache2/sites-available/vipslogic.conf
+sudo -H -u $CODE_USER bash -c "mkdir /home/$CODE_USER/static"
+sed -i -e "s,CODE_USER_REPLACE_WITH_SED,$CODE_USER," /etc/apache2/sites-available/vipslogic.conf
+a2ensite vipslogic
+systemctl restart apache2
+
+# Test it
+echo "127.0.0.1 $servername" >> /etc/hosts
+
+response=$(curl --write-out %{http_code} --connect-timeout 3 --silent --output /dev/null http://$servername/VIPSLogic/rest/organization)
+if [ $response -ne 200 ]
+then
+	echo "Error configuring Apache. Exiting"
+	exit 1
+fi
+
+echo "Apache and WildFly correctly set up. Shutting down Wildfly"
+sudo pkill --newest java
+sleep 5s
+
+
 # Next up is adding organization information
 
 printf "\nORGANIZATION INFO\n"
@@ -150,5 +198,6 @@ do
         read -p "Last name [*]: " last_name
 done
 
+#TODO: Change from ROLLBACK to COMMIT
+PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_name,address1,address2,postal_code,country_code,default_locale,default_map_center,default_map_zoom,default_time_zone,city) VALUES('$organization_name','$address_1','$address_2','$postal_code','$country_code','$default_language',ST_GeomFromText('POINT($longitude $latitude)',4326),4,'$timezone','$city');ROLLBACK;"
 
-# Install and configure Apache
