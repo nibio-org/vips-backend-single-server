@@ -117,9 +117,9 @@ sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic
 
 # Run and test WildFly with VIPSLogic deployed
 # If successful, this will migrate the vipslogic database to its correct state
-echo "TESTING THE WILDFLY APPLICATION SERVER"
+echo "TESTING THE WILDFLY APPLICATION SERVER. Please wait"
 # Start WildFly
-sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh &"
+sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh > /dev/null &"
 # Periodically test a database dependant endpoint
 sleep 10s
 response=400
@@ -200,7 +200,7 @@ read -p "Username: " username
 
 read -sp "Password for $username [*]: " user_password
 
-passwordhash=$(./md5pass.py $user_password $md5_salt)
+passwordhash=$(./md5pass.py $user_password $md5salt)
 
 PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;TRUNCATE public.organization CASCADE; INSERT INTO public.organization(organization_name,address1,address2,postal_code,country_code,default_locale,default_map_center,default_map_zoom,default_time_zone,city) VALUES('$organization_name','$address_1','$address_2','$postal_code','$country_code','$default_language',ST_GeomFromText('POINT($longitude $latitude)',4326),4,'$timezone','$city');COMMIT;"
 
