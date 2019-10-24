@@ -280,6 +280,36 @@ done
 cd $INITIAL_DIRECTORY/wildfly_config
 sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml_for_vipscoremanager_and_vipscore.py --md5salt $md5salt_2 --dbpassword $vipscoremanager_password --corebatch_username $corebatch_username --corebatch_password $corebatch_password --path $WILDFLY_CONFIG_PATH"
 
+passwordhash_2=$(./md5pass.py $corebatch_password $md5salt_2)
+
+PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_id,organization_name,parent_organization_id) VALUES(1,'$organization_name',NULL); INSERT INTO vips_core_user (vips_core_user_id, first_name, last_name, organization_id) VALUES (-10, '', 'VIPSLogic', 1); INSERT INTO vips_core_credentials (id, username, password, vips_core_user_id) VALUES (1, 'vipsbatch', '$passwordhash_2', -10);COMMIT;"
+
+# Testing Wildfly/VIPSCore/VIPSCoreManager
+# Run and test WildFly with VIPSLogic deployed
+# If successful, this will migrate the vipslogic database to its correct state
+echo "TESTING deployment of VIPSCore and VIPSCoreManager on WildFly. Please wait"
+# Start WildFly
+sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh > /dev/null &"
+# Periodically test a database dependant endpoint
+sleep 10s
+response=400
+counter=0
+while [ $response -ne 200 ]
+do
+        sleep 3s
+        response=$(curl --write-out %{http_code} --connect-timeout 3 --silent --output /dev/null localhost:8080/VIPSCoreManager/models)
+        counter=$(($counter+1))
+        if [ $counter -gt 10 ]
+        then
+                echo "Could not start VIPSCore/VIPSCoreManager on WildFly. Exiting"
+                sudo pkill --newest java
+                exit 1
+        fi
+        echo "HTTP response from server: $response"
+done
+
+
+
 
 echo "-----------------------------------"
 echo "    INSTALLATION COMPLETE"
