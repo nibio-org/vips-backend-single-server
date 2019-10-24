@@ -247,8 +247,38 @@ sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCore-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCoreManager-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 
-# Add configuration properties to Wildfly's standalone.xml
+# Initializing the database for vipscoremanager
+printf "\nDATABASE USER INFORMATION for vipscoremanager\n"
+printf "We will create a postgresql user 'vipscoremanager' which will own the 'vipscoremanager' database\n"
+while [ "$vipscoremanager_password" == "" ]
+do
+        read -sp "Password for vipscoremanager [*]: " vipscoremanager_password
+done
 
+sudo -H -u postgres bash -c "psql -v vipscoremanager_password=\"'$vipscoremanager_password'\" -f db/vipscoremanager_init_1.sql"
+
+# Edit standalone.xml, the Wildfly config file, for VIPSCoreManager
+printf "\nWILDFLY CONFIGURATION for VIPSCoreManager\n"
+while [ "$smtpserver" == "" ]
+do
+        read -p "SMTP servername [*]: " smtpserver
+done
+while [ "$md5salt_2" == "" ]
+do
+        read -p "MD5 salt (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt_2
+done
+while [ "$corebatch_username" == "" ]
+do
+	read -p "Core batch username (Allowing VIPSLogic to run models in VIPSCore) " corebatch_username
+done
+while [ "$corebatch_password" == "" ]
+do
+        read -p "Core batch password (Allowing VIPSLogic to run models in VIPSCore) " corebatch_password
+done
+
+
+cd $INITIAL_DIRECTORY/wildfly_config
+sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml_for_vipscoremanager_and_vipscore.py --md5salt $md5salt_2 --dbpassword $vipscoremanager_password --corebatch_username $corebatch_username --corebatch_password $corebatch_password --path $WILDFLY_CONFIG_PATH"
 
 
 echo "-----------------------------------"

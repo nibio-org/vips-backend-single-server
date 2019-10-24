@@ -1,0 +1,5 @@
+<system-properties>
+	<property name="no.nibio.vips.coremanager.VIPSCORE_URL" value="http://localhost:8080/VIPSCore"/>
+	<property name="no.nibio.vips.coremanager.VIPSBATCH_ALLOWED_IPS" value="127.0.0.1"/>
+        <property name="no.nibio.vips.coremanager.MD5_SALT" value="XXXX"/>
+</system-properties>

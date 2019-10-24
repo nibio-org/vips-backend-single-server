@@ -1,0 +1,19 @@
+<datasources>
+                <datasource jta="true" jndi-name="java:jboss/datasources/vipscoremanager" pool-name="Postgres-vipscoremanager-pool" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>jdbc:postgresql://localhost:5432/vipscoremanager</connection-url>
+                    <driver>postgresql</driver>
+                <pool>
+                        <min-pool-size>10</min-pool-size>
+                        <max-pool-size>90</max-pool-size>
+                        <prefill>true</prefill>
+                </pool>
+                    <security>
+                        <user-name>coremanager</user-name>
+                        <password>XXXXXXXXXX</password>
+                    </security>
+
+                </datasource>
+
+
+            </datasources>
+
