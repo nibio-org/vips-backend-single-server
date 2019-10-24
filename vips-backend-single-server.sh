@@ -57,6 +57,22 @@ while [ "$vipscommon_deploy_password" == "" ]
 do
 	read -p "GitLab deploy password for VIPSCommon [*]: " vipscommon_deploy_password
 done
+while [ "$vipscore_deploy_token" == "" ]
+do
+        read -p "GitLab deploy token for VIPSCore [*]: " vipscore_deploy_token
+done
+while [ "$vipscore_deploy_password" == "" ]
+do
+        read -p "GitLab deploy password for VIPSCore [*]: " vipscore_deploy_password
+done
+while [ "$vipscoremanager_deploy_token" == "" ]
+do
+        read -p "GitLab deploy token for VIPSCoreManager [*]: " vipscoremanager_deploy_token
+done
+while [ "$vipscoremanager_deploy_password" == "" ]
+do
+        read -p "GitLab deploy password for VIPSCoreManager [*]: " vipscoremanager_deploy_password
+done
 
 printf "\nWe also need to create a user for compiling and running the code\n"
 
@@ -72,6 +88,7 @@ cd /home/$CODE_USER/VIPSCommon
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 cd ../VIPSLogic
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+
 
 # Download and unzip Wildfly 16
 cd ..
@@ -108,8 +125,9 @@ mkdir /etc/wildfly
 cp systemd_templates/wildfly.conf /etc/wildfly
 cp systemd_templates/wildfly.service /etc/systemd/system
 sed -i -e "s,WILDFLY_PATH_REPLACE_WITH_SED,$WILDFLY_HOME," /etc/systemd/system/wildfly.service
-cp systemd_templates/launch.sh $WILDFLY_HOME/bin
+sudo -H -u $CODE_USER bash -c "cp systemd_templates/launch.sh $WILDFLY_HOME/bin"
 sed -i -e "s,WILDFLY_PATH_REPLACE_WITH_SED,$WILDFLY_HOME," $WILDFLY_HOME/bin/launch.sh
+chmod +x $WILDFLY_HOME/bin/launch.sh 
 
 # Add VIPSLogic to the Wildfly deployments folder
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
@@ -208,3 +226,32 @@ PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "
 
 PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.user_authentication(user_id,user_authentication_type_id,username,password) VALUES((SELECT user_id FROM public.vips_logic_user WHERE first_name='$first_name' AND last_name='$last_name'),1,'$username','$passwordhash'); COMMIT;"
 
+PGPASSWORD=$vipslogic_password psql -U vipslogic -d vipslogic  -h localhost -c "BEGIN;INSERT INTO public.user_vips_logic_role(vips_logic_role_id,user_id) VALUES(1,(SELECT user_id FROM public.vips_logic_user WHERE last_name='$last_name')); COMMIT;"
+
+echo "---------------------------------------------------"
+echo "    VIPSLogic installed successfully               "
+echo "    Next: Install VIPSCore and VIPSCoreManager     "
+echo "---------------------------------------------------"
+
+# Clone VIPSCore and VIPSCoreManager from GitLab
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscore_deploy_token:$vipscore_deploy_password@gitlab.nibio.no/VIPS/VIPSCore.git ~/VIPSCore"
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscoremanager_deploy_token:$vipscoremanager_deploy_password@gitlab.nibio.no/VIPS/VIPSCoreManager.git ~/VIPSCoreManager"
+
+# Build the components
+cd ../VIPSCore
+sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+cd ../VIPSCoreManager
+sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+
+# Link the components to the WildFly deployments folder
+sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCore-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
+sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCoreManager-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
+
+# Add configuration properties to Wildfly's standalone.xml
+
+
+
+echo "-----------------------------------"
+echo "    INSTALLATION COMPLETE"
+echo "-----------------------------------"
+echo "Now run sudo systemctl start wildfly.service to start the system"
