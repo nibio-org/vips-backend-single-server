@@ -3,6 +3,12 @@
 # (c) 2019 NIBIO
 # Author Tor-Einar Skog <tor-einar.skog@nibio.no>
 
+printf "\n\n-----------------------------------------------------------------\n"
+printf "\n        VIPS BACKEND INSTALLATION STARTING\n"
+printf "\n-----------------------------------------------------------------\n"
+
+
+
 # The Linux user where we deploy the application server (WildFly) and the VIPS software components
 CODE_USER=wildfly
 INITIAL_DIRECTORY=$(pwd)
