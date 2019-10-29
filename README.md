@@ -3,9 +3,11 @@
 This repository contains scripts and documentation for configuring the VIPS backend systems (VIPSLogic, VIPSCoreManager and VIPSCore) on a single Linux server.
 
 ## Requirements
-- Ubuntu Linux 18.04 LTS
+- A clean installation of Ubuntu Linux 18.04 LTS
 
 ## Instructions
+
+You need to clone (download) the entire repository to the server on which you want to install VIPS.
 
 In order to clone this repository, issue this command:
 
