@@ -98,7 +98,6 @@ WILDFLY_HOME=/home/$CODE_USER/wildfly-$WILDFLY_VERSION
 WILDFLY_CONFIG_PATH=$WILDFLY_HOME/standalone/configuration
 
 cd $INITIAL_DIRECTORY/wildfly_config
-sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml.py --smtpserver $smtpserver --md5salt $md5salt --dbpassword $vipslogic_password --path $WILDFLY_CONFIG_PATH"
 
 # Add the required modules for VIPSLogic to Wildfly
 # PostgreSQL
@@ -145,8 +144,12 @@ do
         read -sp "Password for vipslogic [*]: " vipslogic_password
 done
 
+cd $INITIAL_DIRECTORY
 sudo -H -u postgres bash -c "psql -v vipslogic_password=\"'$vipslogic_password'\" -f db/vipslogic_init_1.sql"
 
+# Add the info to the wildfly configuration file
+cd $INITIAL_DIRECTORY/wildfly_config
+sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml.py --smtpserver $smtpserver --md5salt $md5salt --dbpassword $vipslogic_password --path $WILDFLY_CONFIG_PATH"
 
 
 # Run and test WildFly with VIPSLogic deployed
