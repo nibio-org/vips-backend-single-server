@@ -1,6 +1,11 @@
 # VIPS Backend single server
 
-Scripts and documentation for configuring the VIPS backend systems (VIPSLogic, VIPSCoreManager and VIPSCore) on a single Linux server
+This repository contains scripts and documentation for configuring the VIPS backend systems (VIPSLogic, VIPSCoreManager and VIPSCore) on a single Linux server.
+
+## Requirements
+- Ubuntu Linux 18.04 TLS
+
+## Instructions
 
 In order to clone this repository, issue this command:
 
