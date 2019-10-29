@@ -3,35 +3,13 @@
 # (c) 2019 NIBIO
 # Author Tor-Einar Skog <tor-einar.skog@nibio.no>
 
+# The Linux user where we deploy the application server (WildFly) and the VIPS software components
 CODE_USER=wildfly
 INITIAL_DIRECTORY=$(pwd)
 
 # Locale update
 # We want the server to user UTF-8 as standard
 locale-gen en_US.UTF-8
-# dpkg-reconfigure locales # probably double work, remove if not needed
-
-# Database install and setup
-# If you have a separate data disk for the database,
-# then you need to perform some manual steps after installing 
-# postgresql. They are not described here.
-apt-get --assume-yes install postgresql postgis
-
-# Initialize the VIPSLogic database
-printf "\n\nInitializing the VIPSLogic database\n"
-printf "We need some input from you before doing that\n"
-printf "Required fields are marked with [*]"
-
-printf "\nDATABASE USER INFORMATION\n"
-printf "We will create a postgresql user 'vipslogic' which will own the 'vipslogic' database\n"
-while [ "$vipslogic_password" == "" ]
-do
-	read -sp "Password for vipslogic [*]: " vipslogic_password
-done
-
-sudo -H -u postgres bash -c "psql -v vipslogic_password=\"'$vipslogic_password'\" -f db/vipslogic_init_1.sql"
-
-printf "Done with database initialization part 1 (of 3)"
 
 printf "\n\nBUILD THE APPLICATION\n"
 printf "\nInstalling OpenJDK11 and build tool Maven\n"
@@ -57,27 +35,16 @@ while [ "$vipscommon_deploy_password" == "" ]
 do
 	read -p "GitLab deploy password for VIPSCommon [*]: " vipscommon_deploy_password
 done
-while [ "$vipscore_deploy_token" == "" ]
-do
-        read -p "GitLab deploy token for VIPSCore [*]: " vipscore_deploy_token
-done
-while [ "$vipscore_deploy_password" == "" ]
-do
-        read -p "GitLab deploy password for VIPSCore [*]: " vipscore_deploy_password
-done
-while [ "$vipscoremanager_deploy_token" == "" ]
-do
-        read -p "GitLab deploy token for VIPSCoreManager [*]: " vipscoremanager_deploy_token
-done
-while [ "$vipscoremanager_deploy_password" == "" ]
-do
-        read -p "GitLab deploy password for VIPSCoreManager [*]: " vipscoremanager_deploy_password
-done
 
-printf "\nWe also need to create a user for compiling and running the code\n"
 
 # Add local user for code deployment and running of the Wildfly Application server
+printf "\nWe also need to create a user for compiling and running the code.\n"
 adduser $CODE_USER
+
+printf "\n-------------------------------------------------------\n"
+printf "       DOWNLOADING AND BUILDING VIPSLogic"
+printf "\n-------------------------------------------------------\n"
+
 
 # Clone VIPSCommon and VIPSLogic from GitLab
 # For some reason we have to add this even though done manually before running the script
@@ -94,13 +61,17 @@ sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
 
 # Download and unzip Wildfly 16
+printf "\n--------------------------------------------------------------------\n"
+printf "       Downloading and configuring the WildFly application server"
+printf "\n--------------------------------------------------------------------\n"
+
 cd ..
 WILDFLY_VERSION=16.0.0.Final
-echo "################## TRYING TO REMOVE WILDFLY"
-echo $(pwd)
-echo "rm -rf wildfly-$WILDFLY_VERSION"
+#echo "################## TRYING TO REMOVE WILDFLY"
+#echo $(pwd)
+#echo "rm -rf wildfly-$WILDFLY_VERSION"
 sudo -H -u $CODE_USER bash -c "rm -rf wildfly-$WILDFLY_VERSION"
-echo "################## TRied TO REMOVE WILDFLY"
+#echo "################## TRied TO REMOVE WILDFLY"
 #exit 0
 sudo -H -u $CODE_USER bash -c "wget https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz"
 sudo -H -u $CODE_USER bash -c "tar xzf wildfly-$WILDFLY_VERSION.tar.gz"
@@ -110,11 +81,11 @@ sudo -H -u $CODE_USER bash -c "rm wildfly-$WILDFLY_VERSION.tar.gz"
 printf "\nWILDFLY CONFIGURATION\n"
 while [ "$smtpserver" == "" ]
 do
-	read -p "SMTP servername [*]: " smtpserver
+	read -p "SMTP servername (The mail server that VIPS can use for outgoing mail) [*]: " smtpserver
 done
 while [ "$md5salt" == "" ]
 do
-	read -p "MD5 salt (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt
+	read -p "MD5 salt for password encryption (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt
 done
 
 WILDFLY_HOME=/home/$CODE_USER/wildfly-$WILDFLY_VERSION
@@ -144,6 +115,33 @@ chmod +x $WILDFLY_HOME/bin/launch.sh
 # Add VIPSLogic to the Wildfly deployments folder
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 
+printf "\n\n--------------------------------------------------------------------------------------------------------------"
+printf "\nThe WildFly application server and VIPSLogic code has been installed. It now needs to be initialized and tested.\n"
+printf "\nBefore that, we need to install and configure the PostgreSQL database.\n"
+printf "\n\n--------------------------------------------------------------------------------------------------------------"
+
+
+# Database install and setup
+# If you have a separate data disk for the database,
+# then you need to perform some manual steps after installing 
+# postgresql. They are not described here.
+apt-get --assume-yes install postgresql postgis
+
+# Initialize the VIPSLogic database
+printf "\n\nInitializing the VIPSLogic database\n"
+printf "We need some input from you before doing that\n"
+printf "Required fields are marked with [*]"
+
+printf "\nDATABASE USER INFORMATION\n"
+printf "We will create a postgresql user 'vipslogic' which will own the 'vipslogic' database\n"
+while [ "$vipslogic_password" == "" ]
+do
+        read -sp "Password for vipslogic [*]: " vipslogic_password
+done
+
+sudo -H -u postgres bash -c "psql -v vipslogic_password=\"'$vipslogic_password'\" -f db/vipslogic_init_1.sql"
+
+
 
 # Run and test WildFly with VIPSLogic deployed
 # If successful, this will migrate the vipslogic database to its correct state
@@ -169,7 +167,7 @@ do
         echo "HTTP response from server: $response"
 done
 
-echo "WildFly started successfully. Installing Apache as frontend."
+echo "WildFly started successfully. Installing the Apache web server as frontend."
 
 # Install the Apache web server as frontend
 cd $INITIAL_DIRECTORY
@@ -197,8 +195,11 @@ echo "Apache and WildFly correctly set up. Shutting down Wildfly"
 sudo pkill --newest java
 sleep 5s
 
-
 # Next up is adding organization information
+printf "\n----------------------------------------------------------------------------\n"
+printf "   Populating the VIPSLogic database with your organization's information "
+printf "\n----------------------------------------------------------------------------\n"
+
 printf "\nORGANIZATION INFO\n"
 while [ "$organization_name" == "" ]
 do
@@ -245,20 +246,50 @@ echo "---------------------------------------------------"
 echo "    VIPSLogic installed successfully               "
 echo "    Next: Install VIPSCore and VIPSCoreManager     "
 echo "---------------------------------------------------"
+while [ "$vipscore_deploy_token" == "" ]
+do
+        read -p "GitLab deploy token for VIPSCore [*]: " vipscore_deploy_token
+done
+while [ "$vipscore_deploy_password" == "" ]
+do
+        read -p "GitLab deploy password for VIPSCore [*]: " vipscore_deploy_password
+done
+while [ "$vipscoremanager_deploy_token" == "" ]
+do
+        read -p "GitLab deploy token for VIPSCoreManager [*]: " vipscoremanager_deploy_token
+done
+while [ "$vipscoremanager_deploy_password" == "" ]
+do
+        read -p "GitLab deploy password for VIPSCoreManager [*]: " vipscoremanager_deploy_password
+done
+while [ "$naerstadmodel_deploy_token" == "" ]
+do
+        read -p "GitLab deploy token for the Naerstad late blight model [*]: " naerstadmodel_deploy_token
+done
+while [ "$naerstadmodel_deploy_password" == "" ]
+do
+        read -p "GitLab deploy password for the Naerstad late blight model [*]: " naerstadmodel_deploy_password
+done
 
-# Clone VIPSCore and VIPSCoreManager from GitLab
+# Clone VIPSCore, VIPSCoreManager and the Nærstad model from GitLab
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscore_deploy_token:$vipscore_deploy_password@gitlab.nibio.no/VIPS/VIPSCore.git ~/VIPSCore"
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscoremanager_deploy_token:$vipscoremanager_deploy_password@gitlab.nibio.no/VIPS/VIPSCoreManager.git ~/VIPSCoreManager"
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$naerstadmodel_deploy_token:$naerstadmodel_deploy_password@gitlab.nibio.no/VIPS/Model_NAERSTADMO.git ~/Model_NAERSTADMO"
 
 # Build the components
 cd /home/$CODE_USER/VIPSCore
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 cd ../VIPSCoreManager
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
+cd ../Model_NAERSTADMO
+sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
 # Link the components to the WildFly deployments folder
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCore-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCoreManager/target/VIPSCoreManager-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
+
+# Copy the Naerstad model to the modelcontainer module
+sudo -H -u $CODE_USER bash -c "cp /home/$CODE_USER/Model_NAERSTADMO/target/NaerstadModel-1.0-SNAPSHOT.jar $WILDFLY_HOME/modules/no/nibio/vips/modelcontainer/main/"
 
 # Initializing the database for vipscoremanager
 printf "\nDATABASE USER INFORMATION for vipscoremanager\n"
@@ -283,13 +314,12 @@ do
 done
 while [ "$corebatch_password" == "" ]
 do
-        read -p "Core batch password (Allowing VIPSLogic to run models in VIPSCore) " corebatch_password
+        read -sp "Core batch password (Allowing VIPSLogic to run models in VIPSCore) " corebatch_password
 done
 
 
 cd $INITIAL_DIRECTORY/wildfly_config
 sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml_for_vipscoremanager_and_vipscore.py --md5salt $md5salt_2 --dbpassword $vipscoremanager_password --corebatch_username VIPSLogic --corebatch_password $corebatch_password --path $WILDFLY_CONFIG_PATH"
-
 
 # Testing Wildfly/VIPSCore/VIPSCoreManager
 # Run and test WildFly with VIPSLogic deployed
@@ -321,8 +351,9 @@ sudo pkill --newest java
 sleep 5s
 
 # Adding organization info (after first Flyway init of VIPSCoreManager)
+cd $INITIAL_DIRECTORY
 passwordhash_2=$(./md5pass.py $corebatch_password $md5salt_2)
-PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_id,organization_name,parent_organization_id) VALUES(1,'$organization_name',NULL); INSERT INTO vips_core_user (vips_core_user_id, first_name, last_name, organization_id) VALUES (-10, '', 'VIPSLogic', 1); INSERT INTO vips_core_credentials (id, username, password, vips_core_user_id) VALUES (1, 'vipsbatch', '$passwordhash_2', -10);COMMIT;"
+PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager  -h localhost -c "BEGIN;TRUNCATE public.organization CASCADE;INSERT INTO public.organization(organization_id,organization_name,parent_organization_id) VALUES(1,'$organization_name',NULL); INSERT INTO vips_core_user (vips_core_user_id, first_name, last_name, organization_id) VALUES (-10, '', 'VIPSLogic', 1); INSERT INTO vips_core_credentials (id, username, password, vips_core_user_id) VALUES (1, 'vipsbatch', '$passwordhash_2', -10);COMMIT;"
 
 
 
@@ -330,4 +361,4 @@ PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager 
 echo "-----------------------------------"
 echo "    INSTALLATION COMPLETE"
 echo "-----------------------------------"
-echo "Now run sudo systemctl start wildfly.service to start the system"
+echo "Now run sudo systemctl start wildfly.service to start the system. Then open up a web browser and go to http://$servername"
