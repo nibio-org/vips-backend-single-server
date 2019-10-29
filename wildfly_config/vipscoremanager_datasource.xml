@@ -8,7 +8,7 @@
                         <prefill>true</prefill>
                 </pool>
                     <security>
-                        <user-name>coremanager</user-name>
+                        <user-name>vipscoremanager</user-name>
                         <password>XXXXXXXXXX</password>
                     </security>
 

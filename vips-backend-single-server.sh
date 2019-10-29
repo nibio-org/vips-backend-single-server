@@ -80,6 +80,9 @@ printf "\nWe also need to create a user for compiling and running the code\n"
 adduser $CODE_USER
 
 # Clone VIPSCommon and VIPSLogic from GitLab
+# For some reason we have to add this even though done manually before running the script
+echo $(echo -n | openssl s_client -showcerts -connect gitlab.nibio.no:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p') >> /etc/ssl/certs/ca-certificates.crt
+# Cloning
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipslogic_deploy_token:$vipslogic_deploy_password@gitlab.nibio.no/VIPS/VIPSLogic.git ~/VIPSLogic"
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscommon_deploy_token:$vipscommon_deploy_password@gitlab.nibio.no/VIPS/VIPSCommon.git ~/VIPSCommon"
 
@@ -93,6 +96,12 @@ sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 # Download and unzip Wildfly 16
 cd ..
 WILDFLY_VERSION=16.0.0.Final
+echo "################## TRYING TO REMOVE WILDFLY"
+echo $(pwd)
+echo "rm -rf wildfly-$WILDFLY_VERSION"
+sudo -H -u $CODE_USER bash -c "rm -rf wildfly-$WILDFLY_VERSION"
+echo "################## TRied TO REMOVE WILDFLY"
+#exit 0
 sudo -H -u $CODE_USER bash -c "wget https://download.jboss.org/wildfly/$WILDFLY_VERSION/wildfly-$WILDFLY_VERSION.tar.gz"
 sudo -H -u $CODE_USER bash -c "tar xzf wildfly-$WILDFLY_VERSION.tar.gz"
 sudo -H -u $CODE_USER bash -c "rm wildfly-$WILDFLY_VERSION.tar.gz"
@@ -119,6 +128,9 @@ sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml.py --smtpserver $smtp
 # etc
 # All modules needed to run VIPSLogic AND VIPSCore are added
 sudo -H -u $CODE_USER bash -c "cp -r modules/* $WILDFLY_HOME/modules"
+# Need to add the newly built VIPSCommon to modules
+sudo -H -u $CODE_USER bash -c "cp ~/VIPSCommon/target/VIPSCommon-1.0-SNAPSHOT.jar $WILDFLY_HOME/modules/no/nibio/vips/VIPSCommon/main/"
+
 
 # Set up WildFly as a systemd service
 mkdir /etc/wildfly
@@ -138,6 +150,7 @@ sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSLogic/target/VIPSLogic
 echo "TESTING THE WILDFLY APPLICATION SERVER. Please wait"
 # Start WildFly
 sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh > /dev/null &"
+#sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh &"
 # Periodically test a database dependant endpoint
 sleep 10s
 response=400
@@ -238,14 +251,14 @@ sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https:/
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscoremanager_deploy_token:$vipscoremanager_deploy_password@gitlab.nibio.no/VIPS/VIPSCoreManager.git ~/VIPSCoreManager"
 
 # Build the components
-cd ../VIPSCore
+cd /home/$CODE_USER/VIPSCore
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 cd ../VIPSCoreManager
 sudo -H -u $CODE_USER bash -c "mvn install -DskipTests"
 
 # Link the components to the WildFly deployments folder
 sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCore-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
-sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCore/target/VIPSCoreManager-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
+sudo -H -u $CODE_USER bash -c "ln -s /home/$CODE_USER/VIPSCoreManager/target/VIPSCoreManager-1.0-SNAPSHOT.war $WILDFLY_HOME/standalone/deployments/"
 
 # Initializing the database for vipscoremanager
 printf "\nDATABASE USER INFORMATION for vipscoremanager\n"
@@ -255,6 +268,7 @@ do
         read -sp "Password for vipscoremanager [*]: " vipscoremanager_password
 done
 
+cd $INITIAL_DIRECTORY
 sudo -H -u postgres bash -c "psql -v vipscoremanager_password=\"'$vipscoremanager_password'\" -f db/vipscoremanager_init_1.sql"
 
 # Edit standalone.xml, the Wildfly config file, for VIPSCoreManager
@@ -267,10 +281,6 @@ while [ "$md5salt_2" == "" ]
 do
         read -p "MD5 salt (to make the one-way encryption much harder to break. Type 10-20 random characters) [*]: " md5salt_2
 done
-while [ "$corebatch_username" == "" ]
-do
-	read -p "Core batch username (Allowing VIPSLogic to run models in VIPSCore) " corebatch_username
-done
 while [ "$corebatch_password" == "" ]
 do
         read -p "Core batch password (Allowing VIPSLogic to run models in VIPSCore) " corebatch_password
@@ -278,11 +288,8 @@ done
 
 
 cd $INITIAL_DIRECTORY/wildfly_config
-sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml_for_vipscoremanager_and_vipscore.py --md5salt $md5salt_2 --dbpassword $vipscoremanager_password --corebatch_username $corebatch_username --corebatch_password $corebatch_password --path $WILDFLY_CONFIG_PATH"
+sudo -H -u $CODE_USER bash -c "python3 init_standalone_xml_for_vipscoremanager_and_vipscore.py --md5salt $md5salt_2 --dbpassword $vipscoremanager_password --corebatch_username VIPSLogic --corebatch_password $corebatch_password --path $WILDFLY_CONFIG_PATH"
 
-passwordhash_2=$(./md5pass.py $corebatch_password $md5salt_2)
-
-PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_id,organization_name,parent_organization_id) VALUES(1,'$organization_name',NULL); INSERT INTO vips_core_user (vips_core_user_id, first_name, last_name, organization_id) VALUES (-10, '', 'VIPSLogic', 1); INSERT INTO vips_core_credentials (id, username, password, vips_core_user_id) VALUES (1, 'vipsbatch', '$passwordhash_2', -10);COMMIT;"
 
 # Testing Wildfly/VIPSCore/VIPSCoreManager
 # Run and test WildFly with VIPSLogic deployed
@@ -290,6 +297,7 @@ PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager 
 echo "TESTING deployment of VIPSCore and VIPSCoreManager on WildFly. Please wait"
 # Start WildFly
 sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh > /dev/null &"
+#sudo -H -u $CODE_USER bash -c "$WILDFLY_HOME/bin/standalone.sh &"
 # Periodically test a database dependant endpoint
 sleep 10s
 response=400
@@ -307,6 +315,14 @@ do
         fi
         echo "HTTP response from server: $response"
 done
+
+echo "VIPSCore and VIPSCoreManager successfully deployed to WildFly. Shutting down Wildfly"
+sudo pkill --newest java
+sleep 5s
+
+# Adding organization info (after first Flyway init of VIPSCoreManager)
+passwordhash_2=$(./md5pass.py $corebatch_password $md5salt_2)
+PGPASSWORD=$vipscoremanager_password psql -U vipscoremanager -d vipscoremanager  -h localhost -c "BEGIN;INSERT INTO public.organization(organization_id,organization_name,parent_organization_id) VALUES(1,'$organization_name',NULL); INSERT INTO vips_core_user (vips_core_user_id, first_name, last_name, organization_id) VALUES (-10, '', 'VIPSLogic', 1); INSERT INTO vips_core_credentials (id, username, password, vips_core_user_id) VALUES (1, 'vipsbatch', '$passwordhash_2', -10);COMMIT;"
 
 
 

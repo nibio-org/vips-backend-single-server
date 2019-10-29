@@ -9,31 +9,6 @@
     <resources>
         <!--resource-root path="."/-->
 	<!--resource-root path="GenericPathogenPlantInfectionModel-1.0-SNAPSHOT.jar"/-->
-	<resource-root path="AppleScabModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="GrassDryingModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="NaerstadModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="OatFloweringModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="PlasmoparaViticolaModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="DeliaRadicumModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="HoplocampaFlavaModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="BarleyNetBlotchModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="CydiaPomonellaModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="RoughageNutritionModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="LygusRugulipennisModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="PsilaRosaeTempModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="PsilaRosaeObservationModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="MamestraBrassicaeModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="DeliaRadicumFloralisObservationModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="NegativePrognosisModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="SeptoriaApiicolaModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="BremiaLactucaeModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="DOWNCASTModel-1.0-SNAPSHOT.jar"/>
-	<!--resource-root path="JythonFungusPilasusPlovisModel.jar"/-->
-	<resource-root path="ZymoseptoriaSimpleRiskGridModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="FinnCerealModels-1.0-SNAPSHOT.jar"/>
-	<resource-root path="SeptoriaHumidityModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="LeafBlotchModel-1.0-SNAPSHOT.jar"/>
-	<resource-root path="FallArmywormModel-1.0-SNAPSHOT.jar"/>
         <!-- Insert resources here -->
     </resources>
     <dependencies>
