@@ -12,6 +12,7 @@ Before you do this, you need to set the correct locale for the server, by:
 `locale-gen en_US.UTF-8`
 
 `sudo dpkg-reconfigure locales`
+
 ![Click OK here, nothing to do](/images/dpkg-reconfigure_1.png)
 ![Select en_US.UTF-8 as the default locale](/images/dpkg-reconfigure_2.png)
 
