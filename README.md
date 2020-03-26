@@ -7,6 +7,14 @@ This repository contains scripts and documentation for configuring the VIPS back
 
 ## Instructions
 
+Before you do this, you need to set the correct locale for the server, by:
+
+`locale-gen en_US.UTF-8`
+
+`sudo dpkg-reconfigure locales`
+
+(Select en_US.UTF-8 as the default locale)
+
 You need to clone (download) the entire repository to the server on which you want to install VIPS.
 
 In order to clone this repository, issue this command:
@@ -21,7 +29,9 @@ If you get this error message:
 
 `echo $(echo -n | openssl s_client -showcerts -connect gitlab.nibio.no:443 2>/dev/null  | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p') >> /etc/ssl/certs/ca-certificates.crt`
 
-...and then run the git clone command again
+...and then run the git clone command again. 
+
+Make sure that the git repo is globally accessible (not only by ROOT)
 
 cd into the directory vips-backend-single-server/ and run the script:
 
