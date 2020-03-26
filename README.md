@@ -7,6 +7,14 @@ This repository contains scripts and documentation for configuring the VIPS back
 
 ## Instructions
 
+Before you do this, you need to set the correct locale for the server, by:
+
+`locale-gen en_US.UTF-8`
+
+`sudo dpkg-reconfigure locales`
+
+(Select en_US.UTF-8 as the default locale)
+
 You need to clone (download) the entire repository to the server on which you want to install VIPS.
 
 In order to clone this repository, issue this command:
