@@ -21,7 +21,9 @@ If you get this error message:
 
 `echo $(echo -n | openssl s_client -showcerts -connect gitlab.nibio.no:443 2>/dev/null  | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p') >> /etc/ssl/certs/ca-certificates.crt`
 
-...and then run the git clone command again
+...and then run the git clone command again. 
+
+Make sure that the git repo is globally accessible (not only by ROOT)
 
 cd into the directory vips-backend-single-server/ and run the script:
 
