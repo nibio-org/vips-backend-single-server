@@ -57,7 +57,7 @@ printf "\n-------------------------------------------------------\n"
 echo $(echo -n | openssl s_client -showcerts -connect gitlab.nibio.no:443 2>/dev/null | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p') >> /etc/ssl/certs/ca-certificates.crt
 # Cloning
 sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipslogic_deploy_token:$vipslogic_deploy_password@gitlab.nibio.no/VIPS/VIPSLogic.git ~/VIPSLogic"
-sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch no_renjin https://$vipscommon_deploy_token:$vipscommon_deploy_password@gitlab.nibio.no/VIPS/VIPSCommon.git ~/VIPSCommon"
+sudo -H -u $CODE_USER bash -c "git clone --single-branch --branch master https://$vipscommon_deploy_token:$vipscommon_deploy_password@gitlab.nibio.no/VIPS/VIPSCommon.git ~/VIPSCommon"
 
 # Build the source code
 cd /home/$CODE_USER/VIPSCommon
